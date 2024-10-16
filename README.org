@@ -1,0 +1,8 @@
+#+TITLE: AuthZ POC
+#+DATE: [2024-10-14 seg]
+
+This repository holds the code of a POC showing how an authorization (~authz~)
+system could be implemented using PostgreSQL (~SQL~). This system was inspired
+by Microsoft Azure's Role-Based Access Control (~RBAC~) structure.
+
+tenant -> resource_group -> { virtual_machine, blob_storage, managed_kubernetes }
