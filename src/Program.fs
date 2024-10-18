@@ -5,7 +5,7 @@ open DbUp
 // TODO use env vars
 [<Literal>]
 let CONN_STR =
-    "Host=localhost;Port=5432;Database=authz;Username=postgres;Password=changeme"
+    "Host=localhost;Port=5437;Database=authz;Username=postgres;Password=changeme"
 
 [<EntryPoint>]
 let main (_args: string[]) : int =
