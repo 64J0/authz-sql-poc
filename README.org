@@ -5,4 +5,84 @@ This repository holds the code of a POC showing how an authorization (~authz~)
 system could be implemented using PostgreSQL (~SQL~). This system was inspired
 by Microsoft Azure's Role-Based Access Control (~RBAC~) structure.
 
-tenant -> resource_group -> { virtual_machine, blob_storage, managed_kubernetes }
++ tenant -> resource_group -> { virtual_machine, blob_storage, managed_k8s }
+
+** How to use
+
+#+BEGIN_SRC bash
+  make start-db
+  
+  make migrate
+
+  # open your dbms and connect to the database
+  # there's a connection string at the f# code
+#+END_SRC
+
+After setting up the project, you can run queries like this to verify the
+authorization rules:
+
+#+BEGIN_SRC sql :tangle no
+  -- GET ALL MEMBERS OF A TENANT
+  select distinct U.EMAIL
+  from USERS as U
+  join TENANT_USER_PERMISSIONS as TU
+  on TU.EMAIL = U.EMAIL
+  join TENANTS as T
+  on T.ID = TU.TENANT
+  where T.NAME = 'Microsoft';
+
+  -- =====================================================
+  -- CHECK IF THE USER HAS A PERMISSION ON A TENANT
+  -- CASE: FALSE
+  select COUNT(U.EMAIL)
+  from USERS as U
+  join TENANT_USER_PERMISSIONS as TU
+  on TU.EMAIL = U.EMAIL
+  join TENANTS as T
+  on T.ID = TU.TENANT
+  where
+  	T.NAME = 'Microsoft'
+  	and TU.PERMISSION = 'Admin'
+  	and U.EMAIL = 'joe@gmail.com';
+
+  -- CASE: TRUE
+  select COUNT(U.EMAIL)
+  from USERS as U
+  join TENANT_USER_PERMISSIONS as TU
+  on TU.EMAIL = U.EMAIL
+  join TENANTS as T
+  on T.ID = TU.TENANT
+  where
+  	T.NAME = 'Microsoft'
+  	and TU.PERMISSION = 'Admin'
+  	and U.EMAIL = 'john@gmail.com';
+
+  -- =====================================================
+  -- GET ALL MEMBERS OF A RESOURCE GROUP
+  select distinct(EMAIL)
+  from
+  (
+  	select U.EMAIL
+  	from USERS as U
+  	join TENANT_USER_PERMISSIONS as TU
+    	  on TU.EMAIL = U.EMAIL
+  	join TENANTS as T
+    	  on T.ID = TU.TENANT
+  	join RESOURCE_GROUPS as RG
+    	  on RG.TENANT_OWNER = T.ID
+  	where
+  		RG.NAME = 'rg-amaz-project-01'
+  		and TU.PERMISSION = 'Admin'
+  ) -- admins at the tenant level are members of the resource group
+  union 
+  (
+  	select U.EMAIL
+  	from USERS as U
+  	join RESOURCE_GROUP_USER_PERMISSIONS as RGU
+  	on RGU.USER_EMAIL = U.EMAIL
+  	join RESOURCE_GROUPS as RG
+  	on RG.ID = RGU.RESOURCE_GROUP
+  	where
+  		RG.NAME = 'rg-amaz-project-01'
+  );
+#+END_SRC
