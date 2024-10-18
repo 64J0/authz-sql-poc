@@ -1,1 +1,1 @@
-*.sql linguist-language=sql
+migrations/*.sql linguist-language=sql
